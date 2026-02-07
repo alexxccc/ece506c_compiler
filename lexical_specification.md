@@ -1,6 +1,5 @@
 
-# Scanner part 1 - Lexical Specification
-
+# Scanner Part 1 - Lexical Specification
 
 ## Input language: 
 Specify the input language of your compiler here.
@@ -25,6 +24,9 @@ These are reserved words in your language
 	break
 
 ### Arduino Sketch Keywords:
+	Serial
+	print
+	println
 	setup
 	loop
 	delay
@@ -66,13 +68,12 @@ Read Section 3.1 for more information on tokens. Do not forget to include mathem
 	/
 	%
 
-// teehee
-### Boolean Operators
+### Boolean Operators:
 	&& 
 	! 
 	|| 
 
-### Comparison Operators
+### Comparison Operators:
 	==
 	\>
 	\>=
@@ -80,20 +81,28 @@ Read Section 3.1 for more information on tokens. Do not forget to include mathem
 	<= 
 	!= 
 
-## Miscellaneous: 
-Special Characters.
+## Comment:
+Separate from misc. characters because all code after a comment should be ignored.
+	//
+	
+## Whitespace:
+Spaces in between different tokens. Mostly ignored but still useful to categorize.
+	' '
+
+## Text Formatting:
+	"
+	\n
+	\t
+	TODO : %d
+
+## Code Formatting:
 	;
 	,
 	.
-	//
-	"
-	'
 	(
 	)
 	{
 	}
-	\n
-	\t
 
 ## Formal Specification:
 
@@ -111,7 +120,7 @@ For example:
 ### Arduino Keywords
 
 ```
-(setup)|(loop)|(delay)|(pinMode)|(analogRead)|(analogWrite)|(digitalRead)|(digitalWrite)
+(Serial)|(print)|(println)|(setup)|(loop)|(delay)|(pinMode)|(analogRead)|(analogWrite)|(digitalRead)|(digitalWrite)
 ```
 
 ### Identifiers:
@@ -142,30 +151,56 @@ For example:
 (==)|(\>)|(\>=)|(<)|(<=)|(!=)
 ```
 
-### Miscellaneous
+### Comment
 ```
-(;)|(,)|(.)|(//)|(")|(')|(\()|(\))|(\{)|(\n)|(\t)
+//.*
+```
+
+### Whitespace
+```
+[ ]
+```
+
+## Text Formatting:
+```
+(")|(\n)|(\t)
+```
+
+## Code Formatting:
+```
+(;)|(,)|(.)|(\()|(\))|(\{)
 ```
 
 ## Examples: 
-
-
 Include clear, runnable examples for each token type, showing how they appear in source code. For example:
 
 
 ### C Based Keywords: 
-
 ```
-*while*(*true*){
-	break;
+int a = 0;
+int b = 0;
+
+while(a < 10){
+	b = b * 2;
+	a = a + 1;
 }
 ```
 
 ### Arduino Sketch Keywords:
-**setup**:
+```
+setup() {
+	int value = 5;
+}
+
+loop() {
+	if(value < 100)
+		value = value + 1;
+	else()
+		Serial.println("100 reached.");
+}
+```
 
 ### Identifiers: 
-
 ```
 class X{
 	int y;
@@ -173,12 +208,59 @@ class X{
 ```
 
 ### Numbers: 
-
 ```
 int z = 255;
 ```
 
+### Arithmetic Operators
+```
+int a = 5;
+int b = 10;
+b = b - 5;
+int c = a + b;
+```
 
+### Boolean Operators
+```
+bool xx = True;
+bool yy = False;
+if(xx || yy){
+	xx = True;
+	yy = True;
+}
+if(xx == True){
+	if(xx&&yy){
+		xx = False;
+	}
+	else{
+		yy = False;
+	}
+}
+```
 
-Your examples should be comprehensive —not as incomplete as the short list shown here.
+### Comparison Operators
+```
+int a = 5;
+int b = 6;
 
+if (a != b){
+	b = b -1;
+}
+if (b >= a){
+	a = a + 1;
+}
+```
+
+### Text Formatting:
+```
+Serial.print("Hello World!\n");
+Serial.println("The cooler Hello World!");
+```
+
+### Code Formatting:
+```
+int lineOfCodeVar = 5;
+if (lineOfCodeVar >= 4) {
+	Serial.println("working as intended.");
+}
+```
