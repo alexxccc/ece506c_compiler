@@ -81,12 +81,10 @@ Read Section 3.1 for more information on tokens. Do not forget to include mathem
 	<= 
 	!= 
 
-## Comment:
-Separate from misc. characters because all code after a comment should be ignored.
+## Comment: Separate from misc. characters because all code after a comment should be ignored.
 	//
 	
-## Whitespace:
-Spaces in between different tokens. Mostly ignored but still useful to categorize.
+## Whitespace: Spaces in between different tokens. Mostly ignored but still useful to categorize.
 	' '
 
 ## Text Formatting:
