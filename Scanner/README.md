@@ -1,8 +1,30 @@
-# Scanner
-The scanner is used to analyze written code and compartmentalize each word into interpretable chunks, called tokens.
+# Scanner (Flex Implementation)
 
-Lex implementation can be found in Scanner.l
+## Overview
+This scanner performs lexical analysis for a restricted subset of an Arduino-style C++ language.  
+It tokenizes the input source file into keywords, identifiers, numbers, operators, punctuation, and string literals.
 
-To run for testing, ./Scanner.out
+Whitespace and single-line comments (`//`) are ignored.
 
-Test files stored inside /test dir.
+---
+
+## Files
+- `scanner.l` – Flex specification for the scanner
+- `main.c` – Driver program that repeatedly calls `yylex()`
+- `token.h` – Token enumeration definitions
+- `tests/` – Directory containing test files
+
+---
+
+## Build Instructions
+
+From the `Scanner/` directory:
+
+```bash
+flex -o scanner.c scanner.l
+gcc scanner.c main.c -o scanner
+
+Then:
+./scanner $location_of_test
+Example ./scanner tests/program.c
+If no test location is specified it will default to using tests/program.c
