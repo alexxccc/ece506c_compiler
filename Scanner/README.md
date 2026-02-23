@@ -23,8 +23,21 @@ From the `Scanner/` directory:
 ```bash
 flex -o scanner.c scanner.l
 gcc scanner.c main.c -o scanner
+```
 
-Then:
+## Running the Scanner:
+
+### To Run with Specific Test:
+```bash
 ./scanner $location_of_test
-Example ./scanner tests/program.c
+```
+### Example
+```bash
+./scanner tests/program.c
+```
+### To Run Default Test:
+```bash
+./scanner
+```
+Note:
 If no test location is specified it will default to using tests/program.c
