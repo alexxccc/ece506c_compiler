@@ -124,7 +124,7 @@ For example:
 ### Identifiers:
 
 ```
-([A-Za-z_])([A-Za-z0-9_])*
+([A-Za-z])([A-Za-z0-9_])*
 ```
 
 ### Numbers:
@@ -262,3 +262,4 @@ if (lineOfCodeVar >= 4) {
 	Serial.println("working as intended.");
 }
 ```
+
