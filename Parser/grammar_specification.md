@@ -102,20 +102,40 @@ Factor --> ! Factor
 
 
 Draw the LR(1) automaton for your grammar
-![Alt text](./automaton/LR1automaton.png)
+![Alt text][def]
 
 
 ## LALR Verification
 
 ### Item Sets: 
 
-List the states that can be merged
-
+List the states that can be merged 
+States 8 and 12 can be merged. States 7 and 11 can be merged.
 
 ### Parse Table and Conflict Check
 
 Draw the LALR Parse Table and check if there are any shift-reduce conflict. Write down if you found or not any shift-reduce conflict.
 
+| State  | **ACTION** |          |     |     |      |      | **GOTO**  |        |        |        |
+| ------ | ---------- | -------- | --- | --- | ---- | ---- | --------- | ------ | ------ | ------ |
+|        | id         | number   | =   | +   | ;    | $    | Program   | Stmt   | Expr   | Term   |
+| ------ | ----       | -------- | --- | --- | ---- | ---- | --------- | ------ | ------ | ------ |
+| I0     | s3         |          |     |     |      |      | I1        | I2     |        |        |
+| I1     |            |          |     |     |      | acc  |           |        |        |        |
+| I2     |            |          |     |     |      | r1   |           |        |        |        |
+| I3     |            |          | s4  |     |      |      |           |        |        |        |
+| I4     | s7         | s8       |     |     |      |      |           |        | I5     | I6     |
+| I5     |            |          |     | s10 | s9   |      |           |        |        |        |
+| I6     |            |          |     | r4  | r4   |      |           |        |        |        |
+| I7     |            |          |     | r5  | r5   |      |           |        |        |        |
+| I8     |            |          |     | r6  | r6   |      |           |        |        |        |
+| I9     |            |          |     |     |      | r2   |           |        |        |        |
+| I10    | s7         | s8       |     |     |      |      |           |        |        | I13    |
+| I11    |            |          |     | r5  | r5   |      |           |        |        |        |
+| I12    |            |          |     | r6  | r6   |      |           |        |        |        |
+| I13    |            |          |     | r3  | r3   |      |           |        |        |        |
+
+There are not any shift-reduce conflicts in this table.
 
 ### LALR Automaton
 
@@ -123,3 +143,6 @@ Re-draw the LR(1) automaton after merging states
 
 
 
+
+
+[def]: ./automaton/LR1automaton.png
