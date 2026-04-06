@@ -8,6 +8,7 @@ void yyerror(const char *s);
 %}
 
 /* Keywords */
+%token TOKEN_ERROR
 %token TOKEN_INCLUDE
 %token TOKEN_VOID
 %token TOKEN_RETURN
