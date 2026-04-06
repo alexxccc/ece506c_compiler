@@ -31,3 +31,15 @@ From the `Parser/` directory:
 bison -d parser.y
 flex scanner.l
 gcc parser.tab.c lex.yy.c main.c -o parser
+```
+
+## Run Instructions
+
+In ./Parser
+
+parser tests/pass/test1_basic.c
+parser tests/pass/test2_serial_delay.c
+parser tests/pass/test3_if_else.c
+
+parser tests/fail/test1_incomplete_expr.c
+parser tests/fail/test2_bad_token.c
