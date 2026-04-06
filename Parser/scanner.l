@@ -16,10 +16,8 @@ STRING      \"([^\\\"\n]|\\.)*\"
 %%
 
 [ \t\r\n]+                      ;
-
 "//".*                          ;
 
-/* C / Arduino keywords */
 "#include"                      { return TOKEN_INCLUDE; }
 "void"                          { return TOKEN_VOID; }
 "return"                        { return TOKEN_RETURN; }
@@ -32,7 +30,6 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "false"                         { return TOKEN_FALSE; }
 "break"                         { return TOKEN_BREAK; }
 
-/* Arduino-specific keywords */
 "Serial"                        { return TOKEN_SERIAL; }
 "print"                         { return TOKEN_PRINT; }
 "println"                       { return TOKEN_PRINTLN; }
@@ -45,7 +42,6 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "digitalRead"                   { return TOKEN_DIGITALREAD; }
 "digitalWrite"                  { return TOKEN_DIGITALWRITE; }
 
-/* Multi-character operators first */
 "=="                            { return TOKEN_EQ; }
 "!="                            { return TOKEN_NEQ; }
 ">="                            { return TOKEN_GTE; }
@@ -53,7 +49,6 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "&&"                            { return TOKEN_AND; }
 "||"                            { return TOKEN_OR; }
 
-/* Single-character operators */
 "="                             { return TOKEN_ASSIGN; }
 "+"                             { return TOKEN_ADD; }
 "-"                             { return TOKEN_SUB; }
@@ -64,7 +59,6 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "<"                             { return TOKEN_LT; }
 "!"                             { return TOKEN_NOT; }
 
-/* Punctuation */
 ";"                             { return TOKEN_SEMI; }
 ","                             { return TOKEN_COMMA; }
 "."                             { return TOKEN_DOT; }
@@ -73,12 +67,10 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "{"                             { return TOKEN_LBRACE; }
 "}"                             { return TOKEN_RBRACE; }
 
-/* Literals and identifiers */
 {STRING}                        { return TOKEN_STRING; }
 {NUMBER}                        { return TOKEN_NUMBER; }
 {IDENT}                         { return TOKEN_IDENT; }
 
-/* Anything else is invalid */
 .                               { return TOKEN_ERROR; }
 
 %%
