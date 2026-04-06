@@ -1,0 +1,34 @@
+# ========================
+# Build artifacts
+# ========================
+*.o
+*.out
+*.exe
+
+# ========================
+# Parser (Flex/Bison outputs)
+# ========================
+Parser/parser
+Parser/lex.yy.c
+Parser/parser.tab.c
+Parser/parser.tab.h
+Parser/parser.output
+
+# ========================
+# Scanner outputs
+# ========================
+Scanner/scanner
+Scanner/scanner.c
+
+# ========================
+# General temporary files
+# ========================
+*~
+*.swp
+*.swo
+.DS_Store
+
+# ========================
+# VSCode / IDE
+# ========================
+.vscode/
