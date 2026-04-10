@@ -2,10 +2,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "parser.tab.h"
+
+static char *copy_lexeme(const char *text) {
+    size_t length = strlen(text);
+    char *copy = (char *)malloc(length + 1);
+    if (copy == NULL) {
+        fprintf(stderr, "Out of memory while copying scanner lexeme.\n");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(copy, text, length + 1);
+    return copy;
+}
 %}
 
 %option noyywrap
+%option yylineno
 
 DIGIT       [0-9]
 LETTER      [A-Za-z]
@@ -67,9 +80,9 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "{"                             { return TOKEN_LBRACE; }
 "}"                             { return TOKEN_RBRACE; }
 
-{STRING}                        { return TOKEN_STRING; }
-{NUMBER}                        { return TOKEN_NUMBER; }
-{IDENT}                         { return TOKEN_IDENT; }
+{STRING}                        { yylval.string_value = copy_lexeme(yytext); return TOKEN_STRING; }
+{NUMBER}                        { yylval.string_value = copy_lexeme(yytext); return TOKEN_NUMBER; }
+{IDENT}                         { yylval.string_value = copy_lexeme(yytext); return TOKEN_IDENT; }
 
 .                               { return TOKEN_ERROR; }
 
