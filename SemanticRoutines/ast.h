@@ -157,6 +157,8 @@ ASTNode *ast_make_binary(BinaryOp op, ASTNode *left, ASTNode *right, int line);
 ASTNode *ast_make_unary(UnaryOp op, ASTNode *operand, int line);
 
 void ast_print_post_order(const ASTNode *node, FILE *out);
+ASTNode *ast_read_post_order(FILE *in);
+ASTNode *ast_read_post_order_file(const char *path);
 void ast_free(ASTNode *node);
 
 const char *type_kind_name(TypeKind kind);

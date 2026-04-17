@@ -421,6 +421,521 @@ void ast_print_post_order(const ASTNode *node, FILE *out) {
     print_node_post_order(node, out, 0);
 }
 
+typedef struct {
+    ASTNode *node;
+    int depth;
+} ASTParseEntry;
+
+static char *copy_range(const char *start, const char *end) {
+    size_t length;
+    char *copy;
+
+    if (start == NULL || end == NULL || end < start) {
+        return NULL;
+    }
+
+    length = (size_t)(end - start);
+    copy = (char *)xmalloc(length + 1);
+    memcpy(copy, start, length);
+    copy[length] = '\0';
+    return copy;
+}
+
+static TypeKind parse_type_name(const char *text) {
+    if (text == NULL) {
+        return TYPE_UNKNOWN;
+    }
+    if (strcmp(text, "int") == 0) {
+        return TYPE_INT;
+    }
+    if (strcmp(text, "bool") == 0) {
+        return TYPE_BOOL;
+    }
+    if (strcmp(text, "string") == 0) {
+        return TYPE_STRING;
+    }
+    if (strcmp(text, "void") == 0) {
+        return TYPE_VOID;
+    }
+    if (strcmp(text, "error") == 0) {
+        return TYPE_ERROR;
+    }
+    return TYPE_UNKNOWN;
+}
+
+static BinaryOp parse_binary_op_name(const char *text) {
+    if (strcmp(text, "+") == 0) {
+        return OP_ADD;
+    }
+    if (strcmp(text, "-") == 0) {
+        return OP_SUB;
+    }
+    if (strcmp(text, "*") == 0) {
+        return OP_MUL;
+    }
+    if (strcmp(text, "/") == 0) {
+        return OP_DIV;
+    }
+    if (strcmp(text, "%") == 0) {
+        return OP_MOD;
+    }
+    if (strcmp(text, "==") == 0) {
+        return OP_EQ;
+    }
+    if (strcmp(text, "!=") == 0) {
+        return OP_NEQ;
+    }
+    if (strcmp(text, "<") == 0) {
+        return OP_LT;
+    }
+    if (strcmp(text, "<=") == 0) {
+        return OP_LTE;
+    }
+    if (strcmp(text, ">") == 0) {
+        return OP_GT;
+    }
+    if (strcmp(text, ">=") == 0) {
+        return OP_GTE;
+    }
+    if (strcmp(text, "&&") == 0) {
+        return OP_AND;
+    }
+    return OP_OR;
+}
+
+static ArduinoCallKind parse_arduino_call_name(const char *text) {
+    if (strcmp(text, "Serial.print") == 0) {
+        return CALL_SERIAL_PRINT;
+    }
+    if (strcmp(text, "Serial.println") == 0) {
+        return CALL_SERIAL_PRINTLN;
+    }
+    if (strcmp(text, "delay") == 0) {
+        return CALL_DELAY;
+    }
+    if (strcmp(text, "pinMode") == 0) {
+        return CALL_PINMODE;
+    }
+    if (strcmp(text, "digitalWrite") == 0) {
+        return CALL_DIGITAL_WRITE;
+    }
+    if (strcmp(text, "digitalRead") == 0) {
+        return CALL_DIGITAL_READ;
+    }
+    if (strcmp(text, "analogWrite") == 0) {
+        return CALL_ANALOG_WRITE;
+    }
+    return CALL_ANALOG_READ;
+}
+
+static void apply_optional_type_suffix(ASTNode *node, const char *line) {
+    const char *type_marker;
+    const char *end;
+    char *type_text;
+
+    if (node == NULL || line == NULL) {
+        return;
+    }
+
+    type_marker = strstr(line, ", type=");
+    if (type_marker == NULL) {
+        return;
+    }
+
+    type_marker += 7;
+    end = strchr(type_marker, ')');
+    if (end == NULL) {
+        return;
+    }
+
+    type_text = copy_range(type_marker, end);
+    node->inferred_type = parse_type_name(type_text);
+    free(type_text);
+}
+
+static ASTNode *parse_leaf_or_header_node(const char *line) {
+    const char *start;
+    const char *middle;
+    const char *end;
+    char *first;
+    char *second;
+    ASTNode *node;
+
+    if (strcmp(line, "Program") == 0) {
+        return ast_make_program(NULL, NULL, 0);
+    }
+    if (strcmp(line, "Block") == 0) {
+        return ast_make_block(NULL, 0);
+    }
+    if (strcmp(line, "IfStatement") == 0) {
+        return ast_make_if(NULL, NULL, NULL, 0);
+    }
+    if (strcmp(line, "WhileStatement") == 0) {
+        return ast_make_while(NULL, NULL, 0);
+    }
+    if (strcmp(line, "ReturnStatement") == 0) {
+        return ast_make_return(NULL, 0);
+    }
+    if (strcmp(line, "BreakStatement") == 0) {
+        return ast_make_break(0);
+    }
+
+    if (strncmp(line, "Include(name=", 13) == 0) {
+        start = line + 13;
+        end = strchr(start, ')');
+        first = copy_range(start, end);
+        node = ast_make_include(first, 0);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "Function(name=", 14) == 0) {
+        start = line + 14;
+        middle = strstr(start, ", return=");
+        end = strchr(middle + 9, ')');
+        first = copy_range(start, middle);
+        second = copy_range(middle + 9, end);
+        node = ast_make_function(first, parse_type_name(second), NULL, 0);
+        free(first);
+        free(second);
+        return node;
+    }
+
+    if (strncmp(line, "Declaration(name=", 17) == 0) {
+        start = line + 17;
+        middle = strstr(start, ", declared_type=");
+        end = strstr(middle + 16, ", type=");
+        if (end == NULL) {
+            end = strchr(middle + 16, ')');
+        }
+        first = copy_range(start, middle);
+        second = copy_range(middle + 16, end);
+        node = ast_make_declaration(parse_type_name(second), first, NULL, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        free(second);
+        return node;
+    }
+
+    if (strncmp(line, "Assignment(name=", 16) == 0) {
+        start = line + 16;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_assignment(first, NULL, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "ArduinoCall(name=", 17) == 0) {
+        start = line + 17;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_arduino_call(parse_arduino_call_name(first), NULL, NULL, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "Identifier(name=", 16) == 0) {
+        start = line + 16;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_identifier(first, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "NumberLiteral(value=", 20) == 0) {
+        start = line + 20;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_number_literal(first, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "StringLiteral(value=", 20) == 0) {
+        start = line + 20;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_string_literal(first, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "BooleanLiteral(value=", 21) == 0) {
+        start = line + 21;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_bool_literal(strcmp(first, "true") == 0, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "BinaryExpr(op=", 14) == 0) {
+        start = line + 14;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_binary(parse_binary_op_name(first), NULL, NULL, 0);
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    if (strncmp(line, "UnaryExpr(op=", 13) == 0) {
+        start = line + 13;
+        end = strstr(start, ", type=");
+        if (end == NULL) {
+            end = strchr(start, ')');
+        }
+        first = copy_range(start, end);
+        node = ast_make_unary(OP_NOT, NULL, 0);
+        if (strcmp(first, "!") != 0) {
+            node->data.unary_expr.op = OP_NOT;
+        }
+        apply_optional_type_suffix(node, line);
+        free(first);
+        return node;
+    }
+
+    return NULL;
+}
+
+static ASTNodeList *build_list_from_children(ASTNode **children, int count) {
+    ASTNodeList *list = NULL;
+    int i;
+
+    for (i = 0; i < count; ++i) {
+        list = ast_list_append(list, children[i]);
+    }
+
+    return list;
+}
+
+static void attach_children(ASTNode *node, ASTNode **children, int child_count) {
+    int i;
+
+    if (node == NULL) {
+        return;
+    }
+
+    switch (node->kind) {
+        case AST_PROGRAM:
+            for (i = 0; i < child_count; ++i) {
+                if (children[i]->kind == AST_INCLUDE) {
+                    node->data.program.includes = ast_list_append(node->data.program.includes, children[i]);
+                } else {
+                    node->data.program.functions = ast_list_append(node->data.program.functions, children[i]);
+                }
+            }
+            break;
+        case AST_FUNCTION:
+            if (child_count > 0) {
+                node->data.function.body = children[0];
+            }
+            break;
+        case AST_BLOCK:
+            node->data.block.statements = build_list_from_children(children, child_count);
+            break;
+        case AST_DECLARATION:
+            if (child_count > 0) {
+                node->data.declaration.initializer = children[0];
+            }
+            break;
+        case AST_ASSIGNMENT:
+            if (child_count > 0) {
+                node->data.assignment.value = children[0];
+            }
+            break;
+        case AST_IF_STMT:
+            if (child_count > 0) {
+                node->data.if_stmt.condition = children[0];
+            }
+            if (child_count > 1) {
+                node->data.if_stmt.then_branch = children[1];
+            }
+            if (child_count > 2) {
+                node->data.if_stmt.else_branch = children[2];
+            }
+            break;
+        case AST_WHILE_STMT:
+            if (child_count > 0) {
+                node->data.while_stmt.condition = children[0];
+            }
+            if (child_count > 1) {
+                node->data.while_stmt.body = children[1];
+            }
+            break;
+        case AST_RETURN_STMT:
+            if (child_count > 0) {
+                node->data.return_stmt.value = children[0];
+            }
+            break;
+        case AST_ARDUINO_CALL:
+            if (child_count > 0) {
+                node->data.arduino_call.first_arg = children[0];
+            }
+            if (child_count > 1) {
+                node->data.arduino_call.second_arg = children[1];
+            }
+            break;
+        case AST_BINARY_EXPR:
+            if (child_count > 0) {
+                node->data.binary_expr.left = children[0];
+            }
+            if (child_count > 1) {
+                node->data.binary_expr.right = children[1];
+            }
+            break;
+        case AST_UNARY_EXPR:
+            if (child_count > 0) {
+                node->data.unary_expr.operand = children[0];
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+ASTNode *ast_read_post_order(FILE *in) {
+    char line_buffer[1024];
+    ASTParseEntry *stack = NULL;
+    int stack_size = 0;
+    int stack_capacity = 0;
+
+    if (in == NULL) {
+        return NULL;
+    }
+
+    while (fgets(line_buffer, sizeof(line_buffer), in) != NULL) {
+        char *content = line_buffer;
+        char *newline;
+        int depth = 0;
+        ASTNode *node;
+        ASTNode **children = NULL;
+        int child_count = 0;
+        int child_start;
+
+        newline = strpbrk(content, "\r\n");
+        if (newline != NULL) {
+            *newline = '\0';
+        }
+
+        while (*content == ' ') {
+            ++content;
+            ++depth;
+        }
+
+        if (*content == '\0' || strcmp(content, "AST (post-order traversal)") == 0) {
+            continue;
+        }
+
+        node = parse_leaf_or_header_node(content);
+        if (node == NULL) {
+            fprintf(stderr, "Could not parse AST line: %s\n", content);
+            while (stack_size > 0) {
+                ast_free(stack[--stack_size].node);
+            }
+            free(stack);
+            return NULL;
+        }
+
+        child_start = stack_size;
+        while (child_start > 0 && stack[child_start - 1].depth > depth) {
+            --child_start;
+        }
+
+        child_count = stack_size - child_start;
+        if (child_count > 0) {
+            int i;
+            children = (ASTNode **)xmalloc(sizeof(ASTNode *) * child_count);
+            for (i = 0; i < child_count; ++i) {
+                children[i] = stack[child_start + i].node;
+            }
+        }
+
+        stack_size = child_start;
+        attach_children(node, children, child_count);
+        free(children);
+
+        if (stack_size == stack_capacity) {
+            int new_capacity = (stack_capacity == 0) ? 16 : stack_capacity * 2;
+            ASTParseEntry *new_stack = (ASTParseEntry *)realloc(stack, sizeof(ASTParseEntry) * new_capacity);
+            if (new_stack == NULL) {
+                fprintf(stderr, "Out of memory while reading the AST.\n");
+                ast_free(node);
+                free(stack);
+                return NULL;
+            }
+            stack = new_stack;
+            stack_capacity = new_capacity;
+        }
+
+        stack[stack_size].node = node;
+        stack[stack_size].depth = depth;
+        ++stack_size;
+    }
+
+    if (stack_size != 1) {
+        int i;
+        for (i = 0; i < stack_size; ++i) {
+            ast_free(stack[i].node);
+        }
+        free(stack);
+        return NULL;
+    }
+
+    {
+        ASTNode *root = stack[0].node;
+        free(stack);
+        return root;
+    }
+}
+
+ASTNode *ast_read_post_order_file(const char *path) {
+    FILE *in;
+    ASTNode *root;
+
+    if (path == NULL) {
+        return NULL;
+    }
+
+    in = fopen(path, "r");
+    if (in == NULL) {
+        return NULL;
+    }
+
+    root = ast_read_post_order(in);
+    fclose(in);
+    return root;
+}
+
 static void free_list(ASTNodeList *list) {
     ASTNodeList *cursor = list;
     while (cursor != NULL) {
