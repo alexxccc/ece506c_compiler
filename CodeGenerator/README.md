@@ -1,6 +1,6 @@
 # Code Generator Round-Trip Test
 
-This folder currently contains a standalone AST loader used to test reconstruction of the AST from `ast.txt`.
+This folder currently contains a standalone AST loader plus an expression code generator that reads `ast.txt`.
 
 ## Build
 
@@ -24,4 +24,10 @@ Or pass the AST file explicitly:
 ./code_generator ../Parser/ast.txt
 ```
 
-The program reconstructs the AST from the text file and prints it in post-order traversal so you can compare it with the original parser output.
+The program reconstructs the AST from the text file, prints it in post-order traversal, and then walks the tree to emit AVR-style assembly snippets into `assembly_output.asm` for expression nodes such as:
+
+- declaration initializers
+- assignment right-hand sides
+- `if` / `while` conditions
+- return values
+- expression-form Arduino calls like `digitalRead(...)`
