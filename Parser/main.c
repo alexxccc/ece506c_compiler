@@ -9,6 +9,7 @@ extern ASTNode *g_ast_root;
 
 int main(int argc, char **argv) {
     const char *filename = (argc >= 2) ? argv[1] : "tests/pass/test1_basic.c";
+    FILE *ast_output_file;
     int parse_result;
     int semantic_errors;
     SymbolTable *symbol_table;
@@ -28,11 +29,24 @@ int main(int argc, char **argv) {
     }
 
     symbol_table = analyze_program(g_ast_root);
+    ast_output_file = NULL;
+
+    ast_output_file = fopen("ast.txt", "w");
+    if (ast_output_file != NULL) {
+        fprintf(ast_output_file, "AST (post-order traversal)\n");
+        ast_print_post_order(g_ast_root, ast_output_file);
+        fclose(ast_output_file);
+    }
 
     printf("Parse successful: %s\n\n", filename);
     printf("AST (post-order traversal)\n");
     ast_print_post_order(g_ast_root, stdout);
     printf("\n");
+    if (ast_output_file != NULL) {
+        printf("AST written to: ast.txt\n\n");
+    } else {
+        printf("Warning: could not write AST file ast.txt\n\n");
+    }
 
     print_semantic_errors(symbol_table, stdout);
     printf("\n");

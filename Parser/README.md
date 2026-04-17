@@ -62,4 +62,6 @@ For a successful parse, the driver prints:
 3. Semantic errors, if any
 4. The symbol tables for each scope
 
+The driver also writes the AST to `ast.txt` in the current working directory each time it runs.
+
 Semantic failures still produce an AST and symbol tables so the analysis phase can be inspected.
