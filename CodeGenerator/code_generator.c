@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../Optimizations/constant_folding.h"
 #include "../SemanticRoutines/ast.h"
 
 static int g_label_counter = 0;
@@ -426,7 +427,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    root = fold_constants(root);
+
     printf("Reconstructed AST from %s\n", input_path);
+    printf("Applied constant folding optimization\n");
     printf("AST (post-order traversal)\n");
     ast_print_post_order(root, stdout);
     printf("\n\n");
@@ -440,6 +444,7 @@ int main(int argc, char **argv) {
 
     fprintf(assembly_out, "; Generated from %s\n", input_path);
     fprintf(assembly_out, "; Expression Code Generation (AVR-style)\n");
+    fprintf(assembly_out, "; Constant folding applied before emission\n");
     generate_expression_tests(root, assembly_out);
     fclose(assembly_out);
 

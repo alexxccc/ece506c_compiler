@@ -1,26 +1,14 @@
-List of potential optimizations for project (ordered)
+# Optimizations
 
-1. Constant folding - allows for expressions to be evaluated, which minimizes the number of tokens added to tree. Ex: int i = 5 + 7; -> int i = 12;
+This directory contains standalone optimization passes that run between AST reconstruction and code generation.
 
-2. Constant propagation - allows for variables with constant values to be treated as constants unless changed. Ex: 
-```
-int i = 5;
-int y = i + 5; 
-```
-can be interpreted as:
-```
-int i = 5;
-int y = 5 + 5;
-```
-In conjunection w/ constant folding, this evaluates to:
-```
-int i = 5;
-int y = 10;
-```
+## Current passes
 
-3. Algebraic + Logical Simplification
-4. Dead code elimination
+- `constant_folding.c` / `constant_folding.h`
+  - folds compile-time integer arithmetic
+  - folds compile-time comparisons
+  - folds compile-time boolean expressions
 
-3. and 4. likely require 1. and 2. to be implemented easily.
+## Build impact
 
-5. Strength reduction
+Any executable that wants optimization support should compile and link the needed files from this directory.
