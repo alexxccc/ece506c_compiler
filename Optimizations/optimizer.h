@@ -1,0 +1,26 @@
+#ifndef OPTIMIZER_H
+#define OPTIMIZER_H
+
+#include <stdio.h>
+
+#include "../SemanticRoutines/ast.h"
+
+typedef enum {
+    OPTIMIZATION_CONSTANT_FOLDING = 1 << 0
+} OptimizationFlag;
+
+typedef struct {
+    unsigned int flags;
+} OptimizationOptions;
+
+OptimizationOptions optimization_options_all(void);
+OptimizationOptions optimization_options_none(void);
+
+int optimization_enable_by_name(OptimizationOptions *options, const char *name);
+int optimization_disable_by_name(OptimizationOptions *options, const char *name);
+void optimization_print_available(FILE *out);
+void optimization_print_enabled(const OptimizationOptions *options, FILE *out);
+
+ASTNode *optimize_ast(ASTNode *root, const OptimizationOptions *options);
+
+#endif

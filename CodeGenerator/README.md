@@ -1,14 +1,14 @@
 # Code Generator Round-Trip Test
 
 This folder currently contains a standalone AST loader plus an expression code generator that reads `ast.txt`.
-Before emitting assembly, it runs a constant-folding optimization pass from `../Optimizations/`.
+Before emitting assembly, it runs the configured optimization passes from `../Optimizations/`.
 
 ## Build
 
 From the `CodeGenerator/` directory:
 
 ```bash
-gcc code_generator.c ../Optimizations/constant_folding.c ../SemanticRoutines/ast.c -o code_generator
+gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_folding.c ../SemanticRoutines/ast.c -o code_generator
 ```
 
 ## Run
@@ -25,6 +25,15 @@ Or pass the AST file explicitly:
 ./code_generator ../Parser/ast.txt
 ```
 
+Optimizations are enabled by default. Use flags to control them:
+
+```bash
+./code_generator --no-opt ../Parser/ast.txt
+./code_generator --opt=constant-folding ../Parser/ast.txt
+./code_generator --disable-opt=constant-folding ../Parser/ast.txt
+./code_generator --list-opts
+```
+
 The program reconstructs the AST from the text file, prints it in post-order traversal, and then walks the tree to emit AVR-style assembly snippets into `assembly_output.asm` for expression nodes such as:
 
 - declaration initializers
@@ -33,7 +42,7 @@ The program reconstructs the AST from the text file, prints it in post-order tra
 - return values
 - expression-form Arduino calls like `digitalRead(...)`
 
-The constant-folding pass currently simplifies:
+The available optimization pass currently is `constant-folding`, which simplifies:
 
 - integer arithmetic on literal operands
 - integer comparisons on literal operands

@@ -1,8 +1,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "../Optimizations/constant_folding.h"
+#include "../Optimizations/optimizer.h"
 #include "../SemanticRoutines/ast.h"
 
 static int g_label_counter = 0;
@@ -23,6 +24,84 @@ static int next_label_id(void) {
 
 static void generate_expression(ASTNode *node, FILE *out);
 static void generate_expression_tests(ASTNode *node, FILE *out);
+
+static void print_usage(const char *program_name) {
+    fprintf(stderr, "Usage: %s [options] [ast-file]\n", program_name);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  --opt=NAME          Enable an optimization by name\n");
+    fprintf(stderr, "  --disable-opt=NAME  Disable an optimization by name\n");
+    fprintf(stderr, "  --no-opt            Disable all optimizations\n");
+    fprintf(stderr, "  --list-opts         Print available optimization names\n");
+    fprintf(stderr, "\nAvailable optimizations:\n");
+    optimization_print_available(stderr);
+}
+
+static int parse_arguments(
+    int argc,
+    char **argv,
+    const char **input_path_out,
+    OptimizationOptions *options_out
+) {
+    int i;
+    int input_was_provided = 0;
+
+    if (input_path_out == NULL || options_out == NULL) {
+        return 0;
+    }
+
+    *input_path_out = "ast.txt";
+    *options_out = optimization_options_all();
+
+    for (i = 1; i < argc; ++i) {
+        const char *argument = argv[i];
+
+        if (strcmp(argument, "--help") == 0 || strcmp(argument, "-h") == 0) {
+            print_usage(argv[0]);
+            return 0;
+        }
+
+        if (strcmp(argument, "--list-opts") == 0) {
+            optimization_print_available(stdout);
+            return 0;
+        }
+
+        if (strcmp(argument, "--no-opt") == 0 || strcmp(argument, "--opt=none") == 0) {
+            *options_out = optimization_options_none();
+            continue;
+        }
+
+        if (strncmp(argument, "--opt=", 6) == 0) {
+            if (!optimization_enable_by_name(options_out, argument + 6)) {
+                fprintf(stderr, "Unknown optimization: %s\n", argument + 6);
+                return -1;
+            }
+            continue;
+        }
+
+        if (strncmp(argument, "--disable-opt=", 14) == 0) {
+            if (!optimization_disable_by_name(options_out, argument + 14)) {
+                fprintf(stderr, "Unknown optimization: %s\n", argument + 14);
+                return -1;
+            }
+            continue;
+        }
+
+        if (argument[0] == '-') {
+            fprintf(stderr, "Unknown option: %s\n", argument);
+            return -1;
+        }
+
+        if (input_was_provided) {
+            fprintf(stderr, "Only one AST input file can be provided.\n");
+            return -1;
+        }
+
+        *input_path_out = argument;
+        input_was_provided = 1;
+    }
+
+    return 1;
+}
 
 static void emit_push_result(FILE *out) {
     emit_line(out, "    push r25\n");
@@ -412,12 +491,21 @@ static void generate_expression_tests(ASTNode *node, FILE *out) {
 }
 
 int main(int argc, char **argv) {
-    const char *input_path = (argc >= 2) ? argv[1] : "ast.txt";
-    ASTNode *root = ast_read_post_order_file(input_path);
+    const char *input_path;
+    OptimizationOptions optimization_options;
+    ASTNode *root;
     const char *output_path = "assembly_output.asm";
     FILE *assembly_out;
+    int parse_result;
 
-    if (root == NULL && argc < 2) {
+    parse_result = parse_arguments(argc, argv, &input_path, &optimization_options);
+    if (parse_result <= 0) {
+        return (parse_result < 0) ? 1 : 0;
+    }
+
+    root = ast_read_post_order_file(input_path);
+
+    if (root == NULL && strcmp(input_path, "ast.txt") == 0) {
         input_path = "../Parser/ast.txt";
         root = ast_read_post_order_file(input_path);
     }
@@ -427,10 +515,12 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    root = fold_constants(root);
+    root = optimize_ast(root, &optimization_options);
 
     printf("Reconstructed AST from %s\n", input_path);
-    printf("Applied constant folding optimization\n");
+    printf("Enabled optimizations: ");
+    optimization_print_enabled(&optimization_options, stdout);
+    printf("\n");
     printf("AST (post-order traversal)\n");
     ast_print_post_order(root, stdout);
     printf("\n\n");
@@ -444,7 +534,9 @@ int main(int argc, char **argv) {
 
     fprintf(assembly_out, "; Generated from %s\n", input_path);
     fprintf(assembly_out, "; Expression Code Generation (AVR-style)\n");
-    fprintf(assembly_out, "; Constant folding applied before emission\n");
+    fprintf(assembly_out, "; Enabled optimizations: ");
+    optimization_print_enabled(&optimization_options, assembly_out);
+    fprintf(assembly_out, "\n");
     generate_expression_tests(root, assembly_out);
     fclose(assembly_out);
 
