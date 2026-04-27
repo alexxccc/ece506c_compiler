@@ -25,11 +25,12 @@ Or pass the AST file explicitly:
 ./code_generator ../Parser/ast.txt
 ```
 
-Optimizations are enabled by default. Use flags to control them:
+Optimizations are disabled by default. Use flags to enable or control them:
 
 ```bash
-./code_generator --no-opt ../Parser/ast.txt
 ./code_generator --opt=constant-folding ../Parser/ast.txt
+./code_generator --opt=all ../Parser/ast.txt
+./code_generator --no-opt ../Parser/ast.txt
 ./code_generator --disable-opt=constant-folding ../Parser/ast.txt
 ./code_generator --list-opts
 ```

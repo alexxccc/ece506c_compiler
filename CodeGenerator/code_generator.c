@@ -50,7 +50,7 @@ static int parse_arguments(
     }
 
     *input_path_out = "ast.txt";
-    *options_out = optimization_options_all();
+    *options_out = optimization_options_none();
 
     for (i = 1; i < argc; ++i) {
         const char *argument = argv[i];
