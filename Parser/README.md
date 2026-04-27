@@ -45,6 +45,8 @@ parser tests/pass/test1_basic.c
 parser tests/pass/test2_serial_delay.c
 parser tests/pass/test3_if_else.c
 parser tests/pass/test4_semantic_ok.c
+parser tests/pass/test7_constant_folding.c
+parser tests/pass/test8_constant_propagation.c
 
 parser tests/fail/test1_incomplete_expr.c
 parser tests/fail/test2_bad_token.c

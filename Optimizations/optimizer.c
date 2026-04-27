@@ -4,8 +4,11 @@
 #include <string.h>
 
 #include "constant_folding.h"
+#include "constant_propagation.h"
 
-static const unsigned int ALL_OPTIMIZATIONS = OPTIMIZATION_CONSTANT_FOLDING;
+static const unsigned int ALL_OPTIMIZATIONS =
+    OPTIMIZATION_CONSTANT_PROPAGATION
+    | OPTIMIZATION_CONSTANT_FOLDING;
 
 OptimizationOptions optimization_options_all(void) {
     OptimizationOptions options;
@@ -26,6 +29,11 @@ int optimization_enable_by_name(OptimizationOptions *options, const char *name) 
 
     if (strcmp(name, "constant-folding") == 0 || strcmp(name, "const-fold") == 0) {
         options->flags |= OPTIMIZATION_CONSTANT_FOLDING;
+        return 1;
+    }
+
+    if (strcmp(name, "constant-propagation") == 0 || strcmp(name, "const-prop") == 0) {
+        options->flags |= OPTIMIZATION_CONSTANT_PROPAGATION;
         return 1;
     }
 
@@ -52,6 +60,11 @@ int optimization_disable_by_name(OptimizationOptions *options, const char *name)
         return 1;
     }
 
+    if (strcmp(name, "constant-propagation") == 0 || strcmp(name, "const-prop") == 0) {
+        options->flags &= ~OPTIMIZATION_CONSTANT_PROPAGATION;
+        return 1;
+    }
+
     if (strcmp(name, "all") == 0) {
         options->flags = 0;
         return 1;
@@ -65,6 +78,7 @@ void optimization_print_available(FILE *out) {
         return;
     }
 
+    fprintf(out, "constant-propagation\n");
     fprintf(out, "constant-folding\n");
 }
 
@@ -80,8 +94,13 @@ void optimization_print_enabled(const OptimizationOptions *options, FILE *out) {
         return;
     }
 
+    if ((options->flags & OPTIMIZATION_CONSTANT_PROPAGATION) != 0) {
+        fprintf(out, "constant-propagation");
+        printed = 1;
+    }
+
     if ((options->flags & OPTIMIZATION_CONSTANT_FOLDING) != 0) {
-        fprintf(out, "constant-folding");
+        fprintf(out, "%sconstant-folding", printed ? ", " : "");
         printed = 1;
     }
 
@@ -93,6 +112,10 @@ void optimization_print_enabled(const OptimizationOptions *options, FILE *out) {
 ASTNode *optimize_ast(ASTNode *root, const OptimizationOptions *options) {
     if (root == NULL || options == NULL) {
         return root;
+    }
+
+    if ((options->flags & OPTIMIZATION_CONSTANT_PROPAGATION) != 0) {
+        root = propagate_constants(root);
     }
 
     if ((options->flags & OPTIMIZATION_CONSTANT_FOLDING) != 0) {

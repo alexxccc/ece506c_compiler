@@ -6,7 +6,8 @@
 #include "../SemanticRoutines/ast.h"
 
 typedef enum {
-    OPTIMIZATION_CONSTANT_FOLDING = 1 << 0
+    OPTIMIZATION_CONSTANT_FOLDING = 1 << 0,
+    OPTIMIZATION_CONSTANT_PROPAGATION = 1 << 1
 } OptimizationFlag;
 
 typedef struct {
