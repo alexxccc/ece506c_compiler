@@ -81,6 +81,41 @@ static ASTNode *make_dead_code_program(void) {
     return ast_make_program(NULL, functions, 1);
 }
 
+static ASTNode *make_algebraic_strength_program(void) {
+    ASTNodeList *statements = NULL;
+    ASTNodeList *functions = NULL;
+
+    statements = ast_list_append(
+        statements,
+        ast_make_declaration(TYPE_INT, "x", ast_make_identifier("input", 1), 1)
+    );
+    statements = ast_list_append(
+        statements,
+        ast_make_declaration(
+            TYPE_INT,
+            "zeroed",
+            ast_make_binary(OP_MUL, ast_make_identifier("x", 2), ast_make_number_literal("0", 2), 2),
+            2
+        )
+    );
+    statements = ast_list_append(
+        statements,
+        ast_make_declaration(
+            TYPE_INT,
+            "same",
+            ast_make_binary(OP_ADD, ast_make_identifier("x", 3), ast_make_number_literal("0", 3), 3),
+            3
+        )
+    );
+
+    functions = ast_list_append(
+        functions,
+        ast_make_function("setup", TYPE_VOID, ast_make_block(statements, 1), 1)
+    );
+
+    return ast_make_program(NULL, functions, 1);
+}
+
 static ASTNode *make_dead_if_program(void) {
     ASTNodeList *then_statements = NULL;
     ASTNodeList *else_statements = NULL;
@@ -117,6 +152,12 @@ static ASTNode *second_statement(ASTNode *program) {
     ASTNode *function = program->data.program.functions->node;
     ASTNode *block = function->data.function.body;
     return block->data.block.statements->next->node;
+}
+
+static ASTNode *third_statement(ASTNode *program) {
+    ASTNode *function = program->data.program.functions->node;
+    ASTNode *block = function->data.function.body;
+    return block->data.block.statements->next->next->node;
 }
 
 static ASTNode *first_statement(ASTNode *program) {
@@ -255,6 +296,28 @@ static void test_dead_code_elimination_simplifies_literal_if(void) {
     ast_free(root);
 }
 
+static void test_algebraic_strength_reduction_simplifies_identities(void) {
+    OptimizationOptions options = optimization_options_none();
+    ASTNode *root = make_algebraic_strength_program();
+    ASTNode *zeroed_declaration;
+    ASTNode *same_declaration;
+
+    assert(optimization_enable_by_name(&options, "algebraic-strength-reduction"));
+    root = optimize_ast(root, &options);
+    zeroed_declaration = second_statement(root);
+    same_declaration = third_statement(root);
+
+    assert(zeroed_declaration->kind == AST_DECLARATION);
+    assert(zeroed_declaration->data.declaration.initializer->kind == AST_NUMBER_LITERAL);
+    assert(strcmp(zeroed_declaration->data.declaration.initializer->data.literal.value, "0") == 0);
+
+    assert(same_declaration->kind == AST_DECLARATION);
+    assert(same_declaration->data.declaration.initializer->kind == AST_IDENTIFIER);
+    assert(strcmp(same_declaration->data.declaration.initializer->data.identifier.name, "x") == 0);
+
+    ast_free(root);
+}
+
 static void test_unknown_optimization_is_rejected(void) {
     OptimizationOptions options = optimization_options_none();
 
@@ -271,6 +334,7 @@ int main(void) {
     test_all_optimizations_propagate_then_fold();
     test_dead_code_elimination_removes_unreachable_statement();
     test_dead_code_elimination_simplifies_literal_if();
+    test_algebraic_strength_reduction_simplifies_identities();
     test_unknown_optimization_is_rejected();
     return 0;
 }

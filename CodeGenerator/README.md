@@ -8,7 +8,7 @@ Before emitting assembly, it runs the configured optimization passes from `../Op
 From the `CodeGenerator/` directory:
 
 ```bash
-gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_propagation.c ../Optimizations/constant_folding.c ../Optimizations/dead_code_elimination.c ../SemanticRoutines/ast.c -o code_generator
+gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_propagation.c ../Optimizations/algebraic_strength_reduction.c ../Optimizations/constant_folding.c ../Optimizations/dead_code_elimination.c ../SemanticRoutines/ast.c -o code_generator
 ```
 
 ## Run
@@ -30,11 +30,13 @@ Optimizations are disabled by default. Use flags to enable or control them:
 ```bash
 ./code_generator --opt=constant-folding ../Parser/ast.txt
 ./code_generator --opt=constant-propagation ../Parser/ast.txt
+./code_generator --opt=algebraic-strength-reduction ../Parser/ast.txt
 ./code_generator --opt=dead-code-elimination ../Parser/ast.txt
 ./code_generator --opt=all ../Parser/ast.txt
 ./code_generator --no-opt ../Parser/ast.txt
 ./code_generator --disable-opt=constant-folding ../Parser/ast.txt
 ./code_generator --disable-opt=constant-propagation ../Parser/ast.txt
+./code_generator --disable-opt=algebraic-strength-reduction ../Parser/ast.txt
 ./code_generator --disable-opt=dead-code-elimination ../Parser/ast.txt
 ./code_generator --list-opts
 ```
@@ -53,6 +55,9 @@ Available optimization passes are:
   - replaces uses of variables that currently hold known integer or boolean literals
   - handles straight-line declarations and assignments
   - treats branches and loops conservatively
+- `algebraic-strength-reduction`
+  - simplifies `x * 0` and `0 * x` to `0`
+  - simplifies `x * 1`, `1 * x`, `x + 0`, `0 + x`, `x - 0`, and `x / 1` to `x`
 - `constant-folding`
   - simplifies integer arithmetic on literal operands
   - simplifies integer comparisons on literal operands
@@ -63,4 +68,4 @@ Available optimization passes are:
   - removes `while` statements whose condition is a compile-time false literal
   - replaces `if` statements with the live branch when the condition is a compile-time literal
 
-When all are enabled with `--opt=all`, passes run in this order: constant propagation, constant folding, dead code elimination.
+When all are enabled with `--opt=all`, passes run in this order: constant propagation, algebraic strength reduction, constant folding, dead code elimination.

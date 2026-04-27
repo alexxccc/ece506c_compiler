@@ -48,6 +48,7 @@ parser tests/pass/test4_semantic_ok.c
 parser tests/pass/test7_constant_folding.c
 parser tests/pass/test8_constant_propagation.c
 parser tests/pass/test9_dead_code_elimination.c
+parser tests/pass/test10_algebraic_strength_reduction.c
 
 parser tests/fail/test1_incomplete_expr.c
 parser tests/fail/test2_bad_token.c
