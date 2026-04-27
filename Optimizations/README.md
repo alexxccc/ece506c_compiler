@@ -12,6 +12,10 @@ This directory contains standalone optimization passes that run between AST reco
   - propagates known integer and boolean literals through straight-line code
   - replaces identifier uses with known literal values
   - invalidates values conservatively across branches and loops
+- `dead_code_elimination.c` / `dead_code_elimination.h`
+  - removes unreachable statements after `return` and `break`
+  - removes loops with compile-time false literal conditions
+  - simplifies `if` statements with compile-time literal conditions
 - `optimizer.c` / `optimizer.h`
   - stores enabled optimization flags
   - enables or disables passes by name
@@ -25,7 +29,7 @@ For code generation, link both the optimizer pipeline and the optimization pass 
 
 ```bash
 cd ../CodeGenerator
-gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_propagation.c ../Optimizations/constant_folding.c ../SemanticRoutines/ast.c -o code_generator
+gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_propagation.c ../Optimizations/constant_folding.c ../Optimizations/dead_code_elimination.c ../SemanticRoutines/ast.c -o code_generator
 ```
 
 ## Tests
@@ -33,6 +37,6 @@ gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_prop
 The optimizer configuration tests live in `tests/test_optimizer_config.c`.
 
 ```bash
-gcc tests/test_optimizer_config.c optimizer.c constant_propagation.c constant_folding.c ../SemanticRoutines/ast.c -o test_optimizer_config
+gcc tests/test_optimizer_config.c optimizer.c constant_propagation.c constant_folding.c dead_code_elimination.c ../SemanticRoutines/ast.c -o test_optimizer_config
 ./test_optimizer_config
 ```

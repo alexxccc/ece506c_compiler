@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 
 #include "../optimizer.h"
 
@@ -58,10 +59,70 @@ static ASTNode *make_combined_optimization_program(void) {
     return ast_make_program(NULL, functions, 1);
 }
 
+static ASTNode *make_dead_code_program(void) {
+    ASTNodeList *statements = NULL;
+    ASTNodeList *functions = NULL;
+
+    statements = ast_list_append(
+        statements,
+        ast_make_declaration(TYPE_INT, "kept", ast_make_number_literal("1", 1), 1)
+    );
+    statements = ast_list_append(statements, ast_make_return(NULL, 2));
+    statements = ast_list_append(
+        statements,
+        ast_make_declaration(TYPE_INT, "removed", ast_make_number_literal("2", 3), 3)
+    );
+
+    functions = ast_list_append(
+        functions,
+        ast_make_function("setup", TYPE_VOID, ast_make_block(statements, 1), 1)
+    );
+
+    return ast_make_program(NULL, functions, 1);
+}
+
+static ASTNode *make_dead_if_program(void) {
+    ASTNodeList *then_statements = NULL;
+    ASTNodeList *else_statements = NULL;
+    ASTNodeList *statements = NULL;
+    ASTNodeList *functions = NULL;
+
+    then_statements = ast_list_append(
+        then_statements,
+        ast_make_declaration(TYPE_INT, "removed", ast_make_number_literal("1", 2), 2)
+    );
+    else_statements = ast_list_append(
+        else_statements,
+        ast_make_declaration(TYPE_INT, "kept", ast_make_number_literal("2", 4), 4)
+    );
+    statements = ast_list_append(
+        statements,
+        ast_make_if(
+            ast_make_bool_literal(0, 1),
+            ast_make_block(then_statements, 2),
+            ast_make_block(else_statements, 4),
+            1
+        )
+    );
+
+    functions = ast_list_append(
+        functions,
+        ast_make_function("setup", TYPE_VOID, ast_make_block(statements, 1), 1)
+    );
+
+    return ast_make_program(NULL, functions, 1);
+}
+
 static ASTNode *second_statement(ASTNode *program) {
     ASTNode *function = program->data.program.functions->node;
     ASTNode *block = function->data.function.body;
     return block->data.block.statements->next->node;
+}
+
+static ASTNode *first_statement(ASTNode *program) {
+    ASTNode *function = program->data.program.functions->node;
+    ASTNode *block = function->data.function.body;
+    return block->data.block.statements->node;
 }
 
 static void test_no_optimizations_leave_tree_unchanged(void) {
@@ -157,6 +218,43 @@ static void test_all_optimizations_propagate_then_fold(void) {
     ast_free(root);
 }
 
+static void test_dead_code_elimination_removes_unreachable_statement(void) {
+    OptimizationOptions options = optimization_options_none();
+    ASTNode *root = make_dead_code_program();
+    ASTNode *function;
+    ASTNode *block;
+
+    assert(optimization_enable_by_name(&options, "dead-code-elimination"));
+    root = optimize_ast(root, &options);
+    function = root->data.program.functions->node;
+    block = function->data.function.body;
+
+    assert(block->data.block.statements != NULL);
+    assert(block->data.block.statements->node->kind == AST_DECLARATION);
+    assert(block->data.block.statements->next != NULL);
+    assert(block->data.block.statements->next->node->kind == AST_RETURN_STMT);
+    assert(block->data.block.statements->next->next == NULL);
+
+    ast_free(root);
+}
+
+static void test_dead_code_elimination_simplifies_literal_if(void) {
+    OptimizationOptions options = optimization_options_none();
+    ASTNode *root = make_dead_if_program();
+    ASTNode *replacement = NULL;
+
+    assert(optimization_enable_by_name(&options, "dce"));
+    root = optimize_ast(root, &options);
+    replacement = first_statement(root);
+
+    assert(replacement->kind == AST_BLOCK);
+    assert(replacement->data.block.statements != NULL);
+    assert(replacement->data.block.statements->node->kind == AST_DECLARATION);
+    assert(strcmp(replacement->data.block.statements->node->data.declaration.name, "kept") == 0);
+
+    ast_free(root);
+}
+
 static void test_unknown_optimization_is_rejected(void) {
     OptimizationOptions options = optimization_options_none();
 
@@ -171,6 +269,8 @@ int main(void) {
     test_constant_propagation_can_be_enabled();
     test_constant_propagation_can_be_disabled();
     test_all_optimizations_propagate_then_fold();
+    test_dead_code_elimination_removes_unreachable_statement();
+    test_dead_code_elimination_simplifies_literal_if();
     test_unknown_optimization_is_rejected();
     return 0;
 }

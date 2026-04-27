@@ -5,10 +5,12 @@
 
 #include "constant_folding.h"
 #include "constant_propagation.h"
+#include "dead_code_elimination.h"
 
 static const unsigned int ALL_OPTIMIZATIONS =
     OPTIMIZATION_CONSTANT_PROPAGATION
-    | OPTIMIZATION_CONSTANT_FOLDING;
+    | OPTIMIZATION_CONSTANT_FOLDING
+    | OPTIMIZATION_DEAD_CODE_ELIMINATION;
 
 OptimizationOptions optimization_options_all(void) {
     OptimizationOptions options;
@@ -34,6 +36,11 @@ int optimization_enable_by_name(OptimizationOptions *options, const char *name) 
 
     if (strcmp(name, "constant-propagation") == 0 || strcmp(name, "const-prop") == 0) {
         options->flags |= OPTIMIZATION_CONSTANT_PROPAGATION;
+        return 1;
+    }
+
+    if (strcmp(name, "dead-code-elimination") == 0 || strcmp(name, "dce") == 0) {
+        options->flags |= OPTIMIZATION_DEAD_CODE_ELIMINATION;
         return 1;
     }
 
@@ -65,6 +72,11 @@ int optimization_disable_by_name(OptimizationOptions *options, const char *name)
         return 1;
     }
 
+    if (strcmp(name, "dead-code-elimination") == 0 || strcmp(name, "dce") == 0) {
+        options->flags &= ~OPTIMIZATION_DEAD_CODE_ELIMINATION;
+        return 1;
+    }
+
     if (strcmp(name, "all") == 0) {
         options->flags = 0;
         return 1;
@@ -80,6 +92,7 @@ void optimization_print_available(FILE *out) {
 
     fprintf(out, "constant-propagation\n");
     fprintf(out, "constant-folding\n");
+    fprintf(out, "dead-code-elimination\n");
 }
 
 void optimization_print_enabled(const OptimizationOptions *options, FILE *out) {
@@ -104,6 +117,11 @@ void optimization_print_enabled(const OptimizationOptions *options, FILE *out) {
         printed = 1;
     }
 
+    if ((options->flags & OPTIMIZATION_DEAD_CODE_ELIMINATION) != 0) {
+        fprintf(out, "%sdead-code-elimination", printed ? ", " : "");
+        printed = 1;
+    }
+
     if (!printed) {
         fprintf(out, "none");
     }
@@ -120,6 +138,10 @@ ASTNode *optimize_ast(ASTNode *root, const OptimizationOptions *options) {
 
     if ((options->flags & OPTIMIZATION_CONSTANT_FOLDING) != 0) {
         root = fold_constants(root);
+    }
+
+    if ((options->flags & OPTIMIZATION_DEAD_CODE_ELIMINATION) != 0) {
+        root = eliminate_dead_code(root);
     }
 
     return root;

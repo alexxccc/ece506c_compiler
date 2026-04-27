@@ -8,7 +8,7 @@ Before emitting assembly, it runs the configured optimization passes from `../Op
 From the `CodeGenerator/` directory:
 
 ```bash
-gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_propagation.c ../Optimizations/constant_folding.c ../SemanticRoutines/ast.c -o code_generator
+gcc code_generator.c ../Optimizations/optimizer.c ../Optimizations/constant_propagation.c ../Optimizations/constant_folding.c ../Optimizations/dead_code_elimination.c ../SemanticRoutines/ast.c -o code_generator
 ```
 
 ## Run
@@ -30,10 +30,12 @@ Optimizations are disabled by default. Use flags to enable or control them:
 ```bash
 ./code_generator --opt=constant-folding ../Parser/ast.txt
 ./code_generator --opt=constant-propagation ../Parser/ast.txt
+./code_generator --opt=dead-code-elimination ../Parser/ast.txt
 ./code_generator --opt=all ../Parser/ast.txt
 ./code_generator --no-opt ../Parser/ast.txt
 ./code_generator --disable-opt=constant-folding ../Parser/ast.txt
 ./code_generator --disable-opt=constant-propagation ../Parser/ast.txt
+./code_generator --disable-opt=dead-code-elimination ../Parser/ast.txt
 ./code_generator --list-opts
 ```
 
@@ -56,5 +58,9 @@ Available optimization passes are:
   - simplifies integer comparisons on literal operands
   - simplifies boolean `!`, `&&`, and `||` when operands are compile-time literals
   - simplifies equality and inequality checks when both operands are compile-time literals
+- `dead-code-elimination`
+  - removes unreachable statements after `return` or `break`
+  - removes `while` statements whose condition is a compile-time false literal
+  - replaces `if` statements with the live branch when the condition is a compile-time literal
 
-When both are enabled with `--opt=all`, constant propagation runs before constant folding.
+When all are enabled with `--opt=all`, passes run in this order: constant propagation, constant folding, dead code elimination.
