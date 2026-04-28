@@ -1,19 +1,21 @@
-int globalCount = 3;
-bool globalReady = true;
-
 void setup() {
+    int outerCount = 3;
+    bool outerReady = true;
+
     int localValue = 5;
     bool localFlag = false;
 
-    localValue = globalCount + localValue * 2;
-    globalCount = localValue - 1;
+    localValue = outerCount + localValue * 2;
+    outerCount = localValue - 1;
 
-    if (globalReady && !localFlag) {
-        localValue = globalCount + 4;
+    if (outerReady && !localFlag) {
+        int innerValue = outerCount + 4;
+        localValue = innerValue + outerCount;
     }
 }
 
 void loop() {
-    int loopValue = globalCount + 1;
+    int loopValue = 1;
+
     loopValue = loopValue * 2;
 }
