@@ -15,18 +15,21 @@ static const unsigned int ALL_OPTIMIZATIONS =
     | OPTIMIZATION_DEAD_CODE_ELIMINATION;
 
 OptimizationOptions optimization_options_all(void) {
+    // Turn on all optimizations
     OptimizationOptions options;
     options.flags = ALL_OPTIMIZATIONS;
     return options;
 }
 
 OptimizationOptions optimization_options_none(void) {
+    // Turn off all optimizations
     OptimizationOptions options;
     options.flags = 0;
     return options;
 }
 
 int optimization_enable_by_name(OptimizationOptions *options, const char *name) {
+    // If name matches optimization, turn on optimization in options
     if (options == NULL || name == NULL) {
         return 0;
     }
@@ -67,6 +70,7 @@ int optimization_enable_by_name(OptimizationOptions *options, const char *name) 
 }
 
 int optimization_disable_by_name(OptimizationOptions *options, const char *name) {
+    // If name matches optimization, turn off optimization in options
     if (options == NULL || name == NULL) {
         return 0;
     }

@@ -48,6 +48,7 @@ static ASTNode *reduce_binary_expression(ASTNode *node) {
 
     switch (node->data.binary_expr.op) {
         case OP_ADD:
+            // Reduce add by 0 to the other operand
             if (is_number_value(node->data.binary_expr.left, "0")) {
                 return take_right_child(node);
             }
@@ -56,11 +57,13 @@ static ASTNode *reduce_binary_expression(ASTNode *node) {
             }
             break;
         case OP_SUB:
+            // Reduce sub by 0 to the left operand
             if (is_number_value(node->data.binary_expr.right, "0")) {
                 return take_left_child(node);
             }
             break;
         case OP_MUL:
+            // Reduce mult by 0 to 0, and mult by 1 to the other operand
             if (is_number_value(node->data.binary_expr.left, "0")
                 || is_number_value(node->data.binary_expr.right, "0")) {
                 return replace_with_zero(node);
@@ -73,6 +76,7 @@ static ASTNode *reduce_binary_expression(ASTNode *node) {
             }
             break;
         case OP_DIV:
+            // Reduce div by 1 to the other operand
             if (is_number_value(node->data.binary_expr.right, "1")) {
                 return take_left_child(node);
             }
@@ -92,6 +96,7 @@ static void reduce_list(ASTNodeList *list) {
 }
 
 static ASTNode *reduce_node(ASTNode *node) {
+    // Find all places where you could reduce and reduce
     if (node == NULL) {
         return NULL;
     }

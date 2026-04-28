@@ -7,20 +7,20 @@ static ASTNode *eliminate_node(ASTNode *node);
 static int literal_truth_value(const ASTNode *node, int *truth_out) {
     long number_value;
     char *end;
-
+    // For a literal we can determine a true or false value
     if (node == NULL || truth_out == NULL) {
         return 0;
     }
-
+    // A boolean literal is true if its value is true, and false if its value is false
     if (node->kind == AST_BOOL_LITERAL) {
         *truth_out = node->data.literal.bool_value ? 1 : 0;
         return 1;
     }
-
+    // A number literal is true if its value is not 0, and false if its value is 0
     if (node->kind != AST_NUMBER_LITERAL) {
         return 0;
     }
-
+    // Try to parse the number literal as a long integer. If it fails, we can't determine the truth value
     number_value = strtol(node->data.literal.value, &end, 10);
     if (end == NULL || *end != '\0') {
         return 0;
@@ -29,7 +29,7 @@ static int literal_truth_value(const ASTNode *node, int *truth_out) {
     *truth_out = (number_value != 0) ? 1 : 0;
     return 1;
 }
-
+// If theres a return or break all code after is dead 
 static int statement_stops_control_flow(const ASTNode *node) {
     return node != NULL
         && (node->kind == AST_RETURN_STMT || node->kind == AST_BREAK_STMT);
@@ -70,6 +70,7 @@ static void eliminate_list(ASTNodeList **list_ref) {
 }
 
 static ASTNode *eliminate_if(ASTNode *node) {
+    // We can eliminate an if statement if the condition is a literal, since one branch is dead code
     int truth_value;
     ASTNode *replacement;
     ASTNode *dead_branch;
@@ -92,6 +93,7 @@ static ASTNode *eliminate_if(ASTNode *node) {
 }
 
 static ASTNode *eliminate_while(ASTNode *node) {
+    // If a while statement condition is a false eliminate the loop
     int truth_value;
 
     node->data.while_stmt.condition = eliminate_node(node->data.while_stmt.condition);
@@ -106,6 +108,7 @@ static ASTNode *eliminate_while(ASTNode *node) {
 }
 
 static ASTNode *eliminate_node(ASTNode *node) {
+    // Find all places where you could eliminate and eliminate
     if (node == NULL) {
         return NULL;
     }
