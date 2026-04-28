@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Used for quick access to variable values for replacement
 typedef struct ConstantBinding {
     char *name;
     ASTNode *literal;
@@ -74,6 +75,7 @@ static void free_bindings(ConstantBinding *bindings) {
     }
 }
 
+// Determine if a variable already has a binding
 static ConstantBinding *find_binding(ConstantBinding *bindings, const char *name) {
     while (bindings != NULL) {
         if (strcmp(bindings->name, name) == 0) {
@@ -85,6 +87,7 @@ static ConstantBinding *find_binding(ConstantBinding *bindings, const char *name
     return NULL;
 }
 
+// Alter bindings (if a variable value changes)
 static void remove_binding(ConstantBinding **bindings, const char *name) {
     ConstantBinding *cursor;
     ConstantBinding *previous = NULL;
@@ -160,6 +163,7 @@ static ConstantBinding *clone_bindings(ConstantBinding *bindings) {
     return copy;
 }
 
+// AssignedName forms a list of the variables that have been assigned
 static int assigned_name_contains(AssignedName *names, const char *name) {
     while (names != NULL) {
         if (strcmp(names->name, name) == 0) {
@@ -248,6 +252,7 @@ static void remove_assigned_bindings(ConstantBinding **bindings, AssignedName *n
     }
 }
 
+// Check each node. If it has a binding, return the associated value. Otherwise make no changes.
 static ASTNode *propagate_identifier(ASTNode *node, ConstantBinding **bindings) {
     ConstantBinding *binding;
     ASTNode *replacement;
@@ -277,6 +282,7 @@ static void propagate_list(ASTNodeList *list, ConstantBinding **bindings) {
     }
 }
 
+// Remove variables that are assigned in if()/while(); may or may not have changed values
 static ASTNode *propagate_if(ASTNode *node, ConstantBinding **bindings) {
     ConstantBinding *then_bindings;
     ConstantBinding *else_bindings;
@@ -318,6 +324,7 @@ static ASTNode *propagate_while(ASTNode *node, ConstantBinding **bindings) {
     return node;
 }
 
+// Check each node. Replace assignments to unchanged variables with assignments to constants, according to bindings.
 static ASTNode *propagate_node(ASTNode *node, ConstantBinding **bindings) {
     if (node == NULL) {
         return NULL;

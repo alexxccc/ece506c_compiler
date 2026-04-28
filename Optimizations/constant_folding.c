@@ -8,6 +8,7 @@
 static ASTNode *fold_node(ASTNode *node);
 static void fold_list(ASTNodeList *list);
 
+// Replace with constant value (int)
 static ASTNode *make_number_result(long value, int line) {
     char buffer[32];
 
@@ -15,10 +16,12 @@ static ASTNode *make_number_result(long value, int line) {
     return ast_make_number_literal(buffer, line);
 }
 
+// Replace with constant value (bool)
 static ASTNode *make_bool_result(int value, int line) {
     return ast_make_bool_literal(value ? 1 : 0, line);
 }
 
+// Check one expr for constants
 static int is_number_literal(const ASTNode *node) {
     return node != NULL && node->kind == AST_NUMBER_LITERAL;
 }
@@ -27,6 +30,7 @@ static int is_bool_literal(const ASTNode *node) {
     return node != NULL && node->kind == AST_BOOL_LITERAL;
 }
 
+// Check each expr for constants
 static int parse_number_literal(const ASTNode *node, long *value_out) {
     char *end;
     long value;
@@ -64,6 +68,7 @@ static int parse_truthy_literal(const ASTNode *node, int *value_out) {
     return 0;
 }
 
+// "Rewrite AST" functions
 static ASTNode *fold_unary_expression(ASTNode *node) {
     int truth_value;
     ASTNode *replacement;
@@ -84,6 +89,7 @@ static ASTNode *fold_unary_expression(ASTNode *node) {
     return replacement;
 }
 
+// Check AST for potential optimizations
 static int fold_binary_to_literal(ASTNode *node, ASTNode **replacement_out) {
     long left_number;
     long right_number;
