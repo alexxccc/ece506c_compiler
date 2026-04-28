@@ -28,6 +28,7 @@ static char *copy_string(const char *text) {
 }
 
 static ASTNode *make_node(ASTNodeKind kind, int line) {
+    // Make new nodes. Initialize them with safe defaults
     ASTNode *node = (ASTNode *)xmalloc(sizeof(ASTNode));
     memset(node, 0, sizeof(ASTNode));
     node->kind = kind;
@@ -37,6 +38,7 @@ static ASTNode *make_node(ASTNodeKind kind, int line) {
 }
 
 ASTNodeList *ast_list_append(ASTNodeList *list, ASTNode *node) {
+    // Used for statement lists and function lists
     ASTNodeList *entry;
     ASTNodeList *cursor;
 
@@ -279,6 +281,7 @@ static void print_type_suffix(const ASTNode *node, FILE *out) {
 static void print_list_post_order(const ASTNodeList *list, FILE *out, int indent);
 
 static void print_node_post_order(const ASTNode *node, FILE *out, int indent) {
+    /* Post-order so children print before the parent node. */
     if (node == NULL) {
         return;
     }
@@ -824,6 +827,7 @@ static void attach_children(ASTNode *node, ASTNode **children, int child_count) 
 }
 
 ASTNode *ast_read_post_order(FILE *in) {
+    // Rebuilds the AST from ast.txt
     char line_buffer[1024];
     ASTParseEntry *stack = NULL;
     int stack_size = 0;
@@ -947,6 +951,7 @@ static void free_list(ASTNodeList *list) {
 }
 
 void ast_free(ASTNode *node) {
+    // Frees all nodes. Children first then parent node
     if (node == NULL) {
         return;
     }

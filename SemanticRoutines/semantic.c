@@ -29,6 +29,7 @@ static char *copy_string(const char *text) {
 }
 
 static Scope *create_scope(SymbolTable *table, Scope *parent, const char *label) {
+    // Scopes form a parent chain so inner blocks can see outer names.
     Scope *scope = (Scope *)xmalloc(sizeof(Scope));
     memset(scope, 0, sizeof(Scope));
     scope->id = table->next_scope_id++;
@@ -94,6 +95,7 @@ static Symbol *lookup_in_scope(const Scope *scope, const char *name) {
 }
 
 static Symbol *lookup_visible_symbol(const SymbolTable *table, const char *name) {
+    // Name lookup starts local then moves outward scope by scope
     Scope *scope = table->current_scope;
 
     while (scope != NULL) {
@@ -148,6 +150,7 @@ static int is_same_type(TypeKind left, TypeKind right) {
 }
 
 static int require_type(SymbolTable *table, int line, const char *context, TypeKind expected, TypeKind actual) {
+    // Type checking for assignments, conditions etc.
     if (actual == TYPE_ERROR || actual == TYPE_UNKNOWN) {
         return 0;
     }
@@ -290,6 +293,7 @@ static TypeKind analyze_binary_expression(SymbolTable *table, ASTNode *node) {
 }
 
 static TypeKind analyze_expression(SymbolTable *table, ASTNode *node) {
+    // Expressions return a type and store it back on the AST node.
     Symbol *symbol;
 
     if (node == NULL) {
@@ -387,6 +391,7 @@ static void analyze_assignment(SymbolTable *table, ASTNode *node) {
 }
 
 static void analyze_statement(SymbolTable *table, ASTNode *node, int loop_depth) {
+    // Statements drive scope changes and decide which expressions to check
     TypeKind condition_type;
 
     if (node == NULL) {
@@ -464,6 +469,7 @@ static void analyze_functions(SymbolTable *table, ASTNodeList *functions) {
 }
 
 SymbolTable *analyze_program(ASTNode *program) {
+    // Main semantic pass: declare functions first, then analyze bodies
     SymbolTable *table = create_symbol_table();
 
     if (program == NULL || program->kind != AST_PROGRAM) {
