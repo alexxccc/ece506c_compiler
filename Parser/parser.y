@@ -99,7 +99,6 @@ void yyerror(const char *s);
 %left TOKEN_ADD TOKEN_SUB
 %left TOKEN_MUL TOKEN_DIV TOKEN_MOD
 %right TOKEN_NOT
-%nonassoc LOWER_THAN_ELSE
 %nonassoc TOKEN_ELSE
 
 %%
@@ -250,7 +249,7 @@ assignment_stmt
     ;
 
 if_stmt
-    : TOKEN_IF TOKEN_LPAREN expr TOKEN_RPAREN stmt %prec LOWER_THAN_ELSE
+    : TOKEN_IF TOKEN_LPAREN expr TOKEN_RPAREN stmt
       {
           $$ = ast_make_if($3, $5, NULL, yylineno);
       }
