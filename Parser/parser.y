@@ -99,7 +99,6 @@ void yyerror(const char *s);
 %left TOKEN_ADD TOKEN_SUB
 %left TOKEN_MUL TOKEN_DIV TOKEN_MOD
 %right TOKEN_NOT
-%nonassoc TOKEN_ELSE
 
 %%
 
