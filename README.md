@@ -44,5 +44,10 @@ Should be public
 - [Yes ] README file added
 - [In Progress] Initial project structure committed
 
-## 9. Additional Notes
+## 9. AI Disclosure
+- Generative AI was mostly used in this project for code generation.
+- After generating the beginning of a section (ex: Bison file), AI was used to continue according to the grammar and guidelines set up manually.
+- Concepts were understood before generating large sections of code
+
+## 10. Additional Notes
 Any additional comments, assumptions, or ideas related to the project.
