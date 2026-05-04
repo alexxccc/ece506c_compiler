@@ -45,7 +45,7 @@ Should be public
 - [In Progress] Initial project structure committed
 
 ## 9. AI Disclosure
-- Generative AI was mostly used in this project for code generation.
+- Generative AI was used in this project primarily for code generation.
 - After generating the beginning of a section (ex: Bison file), AI was used to continue according to the grammar and guidelines set up manually.
 - Concepts were understood before generating large sections of code
 
